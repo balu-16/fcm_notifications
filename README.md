@@ -176,6 +176,15 @@ If the API is elsewhere during development, set `DEV_API_PROXY_TARGET` in
 For deployment, route `/api/` from the web origin to the server and strip the
 `/api` prefix. Alternatively, set `VITE_API_URL` to the separate API's HTTPS
 URL at web build time and add the web origin to the server's `CORS_ORIGINS`.
+On Vercel, set the project root to `client_web`. Add the `VITE_*` variables
+from `client_web/.env.example` to the deployment environment as Config values:
+`VITE_API_URL`, the three `VITE_COGNITO_*` settings, and the
+`VITE_FIREBASE_*` settings. Use the public API's HTTPS URL for `VITE_API_URL`
+unless you have configured a production `/api` reverse proxy. The
+`EXPO_PUBLIC_*` settings belong to the Android app and do not configure the
+web app. Redeploy after changing variables; Vite reads them at build time.
+The web build rejects missing Cognito settings or a region/pool mismatch.
+
 Browser push notifications require HTTPS or localhost; plain HTTP LAN access
 can sign in but is not a secure context for push.
 

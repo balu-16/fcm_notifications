@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { AuthConfigurationError, configureAuth } from '../../lib/auth';
 import {
   confirmSignIn,
   confirmSignUp,
@@ -32,6 +33,7 @@ function deliveryMessage(details?: Delivery, resent = false): string {
 }
 
 function errorMessage(error: unknown): string {
+  if (error instanceof AuthConfigurationError) return error.message;
   const name = error instanceof Error ? error.name : '';
   const messages: Record<string, string> = {
     NotAuthorizedException: 'Incorrect email or password.',
@@ -85,6 +87,7 @@ export function AuthCard({ onSignedIn }: { onSignedIn: (role: SignInRole) => Pro
     }
     setBusy(true);
     try {
+      configureAuth();
       if (mode === 'signUp') {
         const result = await signUp({
           username: email.trim(),

@@ -8,6 +8,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { AuthCard } from './AuthCard';
+import { AuthConfigurationError, configureAuth } from '../../lib/auth';
 import { confirmSignIn, fetchAuthSession, signIn, signOut, signUp } from 'aws-amplify/auth';
 
 vi.mock('aws-amplify/auth', () => ({
@@ -19,11 +20,24 @@ vi.mock('aws-amplify/auth', () => ({
   confirmSignUp: vi.fn(),
   resendSignUpCode: vi.fn(),
 }));
+vi.mock('../../lib/auth', async (original) => ({
+  ...await original<typeof import('../../lib/auth')>(),
+  configureAuth: vi.fn(),
+}));
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
 describe('authentication card', () => {
+  it('shows a configuration failure before attempting Cognito sign-in', async () => {
+    vi.mocked(configureAuth).mockImplementationOnce(() => { throw new AuthConfigurationError(); });
+    render(<AuthCard onSignedIn={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'user@example.test' } });
+    fireEvent.change(screen.getByLabelText('Password', { exact: true }), { target: { value: 'example' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Sign in$/ }));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/incomplete configuration/));
+    expect(signIn).not.toHaveBeenCalled();
+  });
   it('passes the selected admin role to the server-backed sign-in check', async () => {
     vi.mocked(signOut).mockResolvedValueOnce(undefined);
     vi.mocked(signIn).mockResolvedValueOnce({ isSignedIn: true, nextStep: { signInStep: 'DONE' } });

@@ -2,6 +2,15 @@ import { Amplify } from 'aws-amplify';
 import { fetchAuthSession, signOut } from 'aws-amplify/auth';
 
 let configured = false;
+export class AuthConfigurationError extends Error {
+  constructor() {
+    super(
+      'Sign-in is unavailable because this website has incomplete configuration. Contact the site administrator.',
+    );
+    this.name = 'AuthConfigurationError';
+  }
+}
+
 export function configureAuth(): void {
   if (configured) return;
   const region = import.meta.env.VITE_COGNITO_REGION;
@@ -13,7 +22,7 @@ export function configureAuth(): void {
     !userPoolClientId ||
     !userPoolId.startsWith(`${region}_`)
   )
-    throw new Error('Cognito configuration is missing');
+    throw new AuthConfigurationError();
   Amplify.configure({
     Auth: {
       Cognito: { userPoolId, userPoolClientId, loginWith: { email: true } },

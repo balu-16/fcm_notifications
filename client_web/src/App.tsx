@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, onUnauthorized, type Me } from './lib/api';
-import { clearSession, configureAuth, idToken } from './lib/auth';
+import {
+  AuthConfigurationError,
+  clearSession,
+  configureAuth,
+  idToken,
+} from './lib/auth';
 import { AuthCard, type SignInRole } from './features/auth/AuthCard';
 import { PushCard } from './features/push/PushCard';
 import { usePush } from './features/push/usePush';
@@ -12,7 +17,8 @@ export default function App() {
   const [startupError, setStartupError] = useState('');
   const loadUser = useCallback(async (expectedRole?: SignInRole) => {
     const profile = await api.me();
-    if (expectedRole && profile.role !== expectedRole) throw new Error('ROLE_MISMATCH');
+    if (expectedRole && profile.role !== expectedRole)
+      throw new Error('ROLE_MISMATCH');
     setUser(profile);
   }, []);
   const start = useCallback(async () => {
@@ -21,10 +27,12 @@ export default function App() {
       configureAuth();
       if (await idToken()) await loadUser();
       else setUser(null);
-    } catch {
+    } catch (error) {
       await clearSession().catch(() => undefined);
       setStartupError(
-        'Could not restore your session. Check configuration and your connection.',
+        error instanceof AuthConfigurationError
+          ? error.message
+          : 'Could not restore your session. Check configuration and your connection.',
       );
       setUser(null);
     }
