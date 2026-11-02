@@ -166,9 +166,67 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:5173`. Browsers require HTTPS or localhost for service
-workers and push; a plain HTTP LAN address is not a secure web origin. Add any
-additional exact web origins to `CORS_ORIGINS` in `server/.env`.
+Open `http://localhost:5173`, or open `http://<computer-LAN-IP>:5173` from a
+device on the same network. The web app uses the same-origin `/api` path; the
+Vite development server forwards those requests to the API on this computer.
+The browser therefore does not need the computer's IP in its configuration.
+If the API is elsewhere during development, set `DEV_API_PROXY_TARGET` in
+`client_web/.env` to its URL and restart Vite.
+
+For deployment, route `/api/` from the web origin to the server and strip the
+`/api` prefix. Alternatively, set `VITE_API_URL` to the separate API's HTTPS
+URL at web build time and add the web origin to the server's `CORS_ORIGINS`.
+Browser push notifications require HTTPS or localhost; plain HTTP LAN access
+can sign in but is not a secure context for push.
+
+For example, if Nginx serves the website and the server container publishes
+port 3000 on the same host, this Nginx location forwards API requests:
+
+```nginx
+location /api/ {
+    proxy_pass http://127.0.0.1:3000/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+```
+
+The trailing slash in `proxy_pass` removes `/api/`. If Nginx itself runs in a
+container, use the server container's reachable hostname instead of
+`127.0.0.1`. The Android app is a separate client and still needs its deployed
+HTTPS API URL in `EXPO_PUBLIC_API_URL`.
+
+## Server container
+
+Build from the repository root; the build context is the `server` directory:
+
+```sh
+docker build -t notifications-server:local ./server
+```
+
+Prepare a runtime environment file using the settings in `server/.env.example`.
+Its `DATABASE_URL` must refer to a PostgreSQL server reachable from inside the
+container: `localhost` inside the container refers to the container itself.
+Set `CORS_ORIGINS` to the exact browser origins that need direct API access.
+Mount the Firebase service-account file at runtime; it is not included in the
+image, and it must be readable by the container's non-root `node` user.
+
+Run migrations once against the intended database before starting the server:
+
+```sh
+docker run --rm --env-file /path/to/container.env notifications-server:local node dist/database/migrate.js
+```
+
+Start the server, replacing the two example paths with your own:
+
+```sh
+docker run --rm --name notifications-server \
+  --env-file /path/to/container.env \
+  -e NODE_ENV=production \
+  -e FIREBASE_SERVICE_ACCOUNT_PATH=/run/secrets/firebase.json \
+  --mount type=bind,source=/path/to/service-account.json,target=/run/secrets/firebase.json,readonly \
+  -p 3000:3000 notifications-server:local
+```
 
 ## Android development build
 

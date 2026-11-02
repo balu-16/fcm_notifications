@@ -105,7 +105,8 @@ async function request<T>(
   const timeout = setTimeout(() => controller.abort(), path === '/me' ? 25_000 : 10_000);
   let response: Response;
   try {
-    response = await fetch(`${import.meta.env.VITE_API_URL}${path}`, {
+    const base = (import.meta.env.VITE_API_URL?.trim() || '/api').replace(/\/+$/, '');
+    response = await fetch(`${base}${path}`, {
       ...init,
       headers,
       signal: controller.signal,
