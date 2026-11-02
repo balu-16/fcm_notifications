@@ -1,0 +1,11 @@
+# EAS No-VCS uploads use this directory as their project root.
+node_modules/
+.expo/
+dist/
+android/
+ios/
+.env
+.env.*
+!.env.example
+google-services.json
+!google-services.json.example

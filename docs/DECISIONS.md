@@ -1,0 +1,22 @@
+# Decisions
+
+- Use PostgreSQL 18's `/var/lib/postgresql` volume mount because its image stores data under a version-specific directory.
+- Pin TypeScript 6.0.3 because Expo SDK 58's template and the current TypeScript ESLint parser both support it.
+- Use native Node ESM in the server because NestJS 12 packages are ESM modules.
+- Keep separate Cognito app clients for web and Android and validate ID-token audiences against both explicitly configured IDs.
+- Configure the exact administrator group name, because Cognito group names are case-sensitive and the supplied group is `ADMIN`.
+- Use Firebase installation IDs for web and native FCM registration tokens for Expo Android while Firebase transitions between registration APIs.
+- Use process-local notification work and rate limiting for this single-server learning project; production needs durable work and shared limits.
+- Add an admin-only recipient preview endpoint because accurate cross-page device and user counts cannot be derived from one paginated user response.
+- Store skipped-user IDs with each send so an idempotent replay returns the same recipient snapshot.
+- Reconcile both `pending` and `sending` jobs as interrupted on startup because a crash can occur between the transaction commit and worker start.
+- Send HTTPS web click links through FCM and resolve relative or localhost links in the pinned service worker because FCM's built-in link option requires HTTPS.
+- Use the current synchronous Expo notification-response API because SDK 58 deprecates its asynchronous predecessor.
+- Honor Retry-After when exposed and use at least 60 seconds for quota retries; the Admin SDK can also perform its own internal retries.
+- Keep manual opt-out across reloads even when OS permission remains granted so disabling a device is not immediately undone.
+- Describe `sent` as FCM acceptance, since the Admin SDK cannot confirm that an OS displayed a notification.
+- Omit Firebase Analytics initialization because Analytics is not needed for push and the provided measurement ID is optional.
+- Override the unused Firestore dependency's Node gRPC package to 1.14.7 to address its published high-severity advisories without changing the Firebase Messaging SDK.
+- Retain Expo's supported glob/minimatch versions and Firebase Admin's optional Firestore tree rather than force incompatible major overrides; audit currently reports moderate tooling/dependency advisories.
+- Add an app-local `.gitignore` because EAS No VCS treats `client_app` as its upload root and must still exclude local env files and Firebase JSON.
+- Verify browser permission revocation through client deactivation rather than assuming FCM will immediately reject the registration; cover invalid-registration handling with mocked FCM results.

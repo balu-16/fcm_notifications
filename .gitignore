@@ -1,0 +1,37 @@
+# Dependencies and build output
+**/node_modules/
+**/dist/
+**/build/
+**/coverage/
+**/test-results/
+**/playwright-report/
+**/.expo/
+**/.cache/
+**/.turbo/
+**/android/
+**/ios/
+
+# Local configuration and credentials (examples are safe to commit)
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+**/google-services.json
+!**/google-services.json.example
+**/.secrets/
+**/*service-account*.json
+**/*firebase-adminsdk*.json
+**/*.pem
+**/*.key
+
+# Logs, OS files, and local database files
+**/*.log
+.DS_Store
+Thumbs.db
+postgres-data/
+*.tsbuildinfo
+
+# Local network diagnostics
+diagnostics/
